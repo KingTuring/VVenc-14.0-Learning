@@ -61,6 +61,9 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace vvenc {
   struct Picture;
 
+  // T  : struct
+  // RC : rate control
+  // PassStats:
   struct TRCPassStats
   {
     TRCPassStats( const int _poc, const int _qp, const double _lambda, const uint16_t _visActY,

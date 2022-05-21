@@ -1,4 +1,4 @@
-/* -----------------------------------------------------------------------------
+﻿/* -----------------------------------------------------------------------------
 The copyright in this software is being made available under the Clear BSD
 License, included below. No patent rights, trademark rights and/or 
 other Intellectual Property Rights other than the copyrights concerning 
@@ -186,6 +186,11 @@ VVENC_DECL vvencEncoder* vvenc_encoder_create()
 
 VVENC_DECL int vvenc_encoder_open( vvencEncoder *enc, vvenc_config* config )
 {
+  // 一个很聪明的实现
+  // 接口部分用的都是 vvencEncoder
+  // 但是实际上我们使用的内存是 VVEncImpl
+  // 在外部不需要考虑很多
+  // 在内部才需要 include<vvencimp.h>
   auto e = (vvenc::VVEncImpl*)enc;
   if (!e)
   {

@@ -1,4 +1,4 @@
-/* -----------------------------------------------------------------------------
+﻿/* -----------------------------------------------------------------------------
 The copyright in this software is being made available under the Clear BSD
 License, included below. No patent rights, trademark rights and/or 
 other Intellectual Property Rights other than the copyrights concerning 
@@ -79,6 +79,12 @@ class VVEncImpl
 {
 public:
 
+    // 编码器的内部状态有这几种
+    // 0 未初始化
+    // 1 初始化
+    // 2 正在编码
+    // 3 清空
+    // 4 完成
   enum VVEncInternalState
   {
     INTERNAL_STATE_UNINITIALIZED = 0,

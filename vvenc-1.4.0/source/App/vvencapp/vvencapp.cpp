@@ -1,4 +1,4 @@
-/* -----------------------------------------------------------------------------
+﻿/* -----------------------------------------------------------------------------
 The copyright in this software is being made available under the Clear BSD
 License, included below. No patent rights, trademark rights and/or 
 other Intellectual Property Rights other than the copyrights concerning 
@@ -234,6 +234,8 @@ int main( int argc, char* argv[] )
   }
 
   int iRet = vvenc_encoder_open( enc, &vvenccfg );
+  // vvenc_encoder_open 之后
+  // 编码器的状态标志为： VVENC_ERR_INITIALIZE 初始化
   if( 0 != iRet )
   {
     printVVEncErrorMsg( "vvencapp cannot create encoder", iRet, vvenc_get_last_error( enc ) );
@@ -244,12 +246,18 @@ int main( int argc, char* argv[] )
   // get the adapted config
   vvenc_get_config( enc, &vvenccfg );
 
+  // 编码器的描述等级
+  // 也就是信息的输出等级
   if( vvenccfg.m_verbosity >= VVENC_INFO )
   {
     std::stringstream css;
     css << vvencappCfg.getAppConfigAsString( vvenccfg.m_verbosity );
     css << vvenc_get_config_as_string( &vvenccfg, vvenccfg.m_verbosity);
     msgApp( nullptr, VVENC_INFO,"%s\n", css.str().c_str() );
+    // 打印出来基本信息
+    // 包括使用了哪些工具
+    // 码率控制的信息
+    // 并行处理的信息
   }
   if( !strcmp( vvencappCfg.m_inputFileName.c_str(), "-" )  )
   {
@@ -280,6 +288,7 @@ int main( int argc, char* argv[] )
   vvenc_YUVBuffer_alloc_buffer( &cYUVInputBuffer, vvenccfg.m_internChromaFormat, vvenccfg.m_SourceWidth, vvenccfg.m_SourceHeight );
 
   // --- start timer
+  // time_point的单位是 纳秒 10的负9次方
   std::chrono::steady_clock::time_point cTPStartRun = std::chrono::steady_clock::now();
   if( vvenccfg.m_verbosity > VVENC_WARNING )
   {

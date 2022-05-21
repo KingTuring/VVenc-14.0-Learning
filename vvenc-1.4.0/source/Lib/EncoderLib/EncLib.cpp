@@ -1,4 +1,4 @@
-/* -----------------------------------------------------------------------------
+﻿/* -----------------------------------------------------------------------------
 The copyright in this software is being made available under the Clear BSD
 License, included below. No patent rights, trademark rights and/or 
 other Intellectual Property Rights other than the copyrights concerning 
@@ -192,22 +192,32 @@ void EncLib::initPass( int pass, const char* statsFName )
   xUninitLib();
 
   // enable encoder config based on rate control pass
+  // 两遍码率控制的对应情况
+  // 1. 两遍编码 
+  // 2. 打开 look ahead 并且开启 率控
   if( m_encCfg.m_RCNumPasses > 1 || (m_encCfg.m_LookAhead && m_orgCfg.m_RCTargetBitrate) )
   {
     if (!m_rateCtrl->rcIsFinalPass)
     {
       // set encoder config for 1st rate control pass
       const_cast<VVEncCfg&>(m_encCfg) = m_firstPassCfg;
+      // 第一遍编码用 m_firstPassCfg
+      // 可能是第一遍要快点编码，所以很多工具是不用的
     }
     else
     {
       // restore encoder config for final 2nd RC pass
       const_cast<VVEncCfg&>(m_encCfg) = m_orgCfg;
       const_cast<VVEncCfg&>(m_encCfg).m_QP = m_rateCtrl->getBaseQP();
+      // 第二遍编码用 m_orgCfg
+      // 并且直接设定 QP
     }
   }
 
   // thread pool
+  // m_numThreads 默认是 8
+  // m_threadPool 一下子控制着 所有线程，并不是相互独立的存在
+  // 而 Enc_lib 里面的 m_threadPool 放的是 编码 Slice 的线程
   if( m_encCfg.m_numThreads > 0 )
   {
     m_threadPool = new NoMallocThreadPool( m_encCfg.m_numThreads, "EncSliceThreadPool", &m_encCfg );
@@ -226,6 +236,7 @@ void EncLib::initPass( int pass, const char* statsFName )
   }
 
   // pre analysis encoder
+  // 可以简单的认为：m_LookAhead 就是预分析模块
   if( m_encCfg.m_LookAhead )
   {
     m_preEncoder = new EncGOP( msg );
@@ -247,6 +258,10 @@ void EncLib::initPass( int pass, const char* statsFName )
   }
   m_encStages.push_back( m_gopEncoder );
 
+  // 所以编码过程是按照 m_encStages 来进行的
+  // 到目前为止，编码过程是
+  // MCTF -> m_preEncoder -> m_gopEncoder
+  // 也就是 运动补偿滤波 -> lookahead -> GOP编码
   // link encoder stages
   for( int i = 0; i < (int)m_encStages.size() - 1; i++ )
   {
@@ -277,10 +292,14 @@ void EncLib::initPass( int pass, const char* statsFName )
 
 void EncLib::xUninitLib()
 {
+  // EncLib 中的线程池控制着多线程 
+  // m_threadPool 指向线程
   // make sure all processing threads are stopped before releasing data
   if( m_threadPool )
   {
     m_threadPool->shutdown( true );
+    // 退出线程
+    // 设置线程为 开始等待
   }
 
   // sub modules
@@ -288,6 +307,10 @@ void EncLib::xUninitLib()
   {
     m_rateCtrl->destroy();
   }
+  
+  // MCTF
+  // Motion Compensation Temporal Filter
+  // 这边一系列的操作都是在释放内存
   if( m_MCTF )
   {
     delete m_MCTF;
@@ -413,6 +436,8 @@ void EncLib::encodePicture( bool flush, const vvencYUVBuffer* yuvInBuf, AccessUn
     PROFILER_EXT_UPDATE( g_timeProfiler, P_TOP_LEVEL, pic->TLayer );
 
     // trigger stages
+    // 编码的下一步进行
+    // 依靠 encStage
     isQueueEmpty = m_picsRcvd > firstPoc || ( m_picsRcvd <= firstPoc && flush );
     for( auto encStage : m_encStages )
     {
@@ -427,8 +452,12 @@ void EncLib::encodePicture( bool flush, const vvencYUVBuffer* yuvInBuf, AccessUn
       au.clearAu();
       m_anyAuDone = true;
     }
-
+    static int i = 0;
+    ++i;
     // wait if input picture hasn't been stored yet or if encoding is running and no new output access unit has been encoded
+    // waitAndStay 这一阶段是否完成
+    // 如果完成 waitAndStay = true
+    // 则可以进入到下一阶段了
     bool waitAndStay = inputPending || ( m_AuList.empty() && ! isQueueEmpty && ( m_anyAuDone || flush ) );
     if( ! waitAndStay )
     {
