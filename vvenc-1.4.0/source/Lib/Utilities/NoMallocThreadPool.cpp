@@ -1,4 +1,4 @@
-/* -----------------------------------------------------------------------------
+﻿/* -----------------------------------------------------------------------------
 The copyright in this software is being made available under the Clear BSD
 License, included below. No patent rights, trademark rights and/or 
 other Intellectual Property Rights other than the copyrights concerning 
@@ -68,6 +68,8 @@ NoMallocThreadPool::NoMallocThreadPool( int numThreads, const char * threadPoolN
   int tid = 0;
   for( auto& t: m_threads )
   {
+    // 线程创建是在这里创建的
+    // 每个线程都在执行一个死循环，在这个死循环中等待触发条件
     t = std::thread( &NoMallocThreadPool::threadProc, this, tid++, *encCfg );
   }
 }

@@ -527,6 +527,7 @@ void EncGOP::xEncodePictures( bool flush, AccessUnitList& auList, PicList& doneL
       auto picItr             = find_if( m_procList.begin(), m_procList.end(), []( auto pic ) { return pic->slices[ 0 ]->checkRefPicsReconstructed(); } );
       const bool nextPicReady = picItr != m_procList.end();
 
+      // 主线程在这里触发 工作线程
       // check at least one picture and one pic encoder ready
       if( m_freePicEncoderList.empty()
           || ! nextPicReady )
